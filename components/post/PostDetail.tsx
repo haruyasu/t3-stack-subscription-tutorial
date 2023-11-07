@@ -21,6 +21,7 @@ interface PostDetailProps {
   } & { likes: CommentLike[] })[]
   pageCount: number
   totalComments: number
+  isSubscribed: boolean
 }
 
 // 投稿詳細
@@ -30,8 +31,19 @@ const PostDetail = ({
   comments,
   pageCount,
   totalComments,
+  isSubscribed,
 }: PostDetailProps) => {
   const router = useRouter()
+
+  // 表示内容判定
+  const isSubscribedPost =
+    post.premium && !isSubscribed && post.userId !== userId
+
+  // 投稿内容を200文字に制限
+  const content =
+    isSubscribedPost && post.content.length > 200
+      ? post.content.slice(0, 200) + "..."
+      : post.content
 
   // 投稿削除
   const { mutate: deletePost, isLoading } = trpc.post.deletePost.useMutation({
@@ -61,6 +73,12 @@ const PostDetail = ({
 
   return (
     <div className="space-y-5">
+      {post.premium && (
+        <div className="bg-gradient-radial from-blue-500 to-sky-500 rounded-md text-white font-semibold px-3 py-1 text-xs inline-block">
+          有料会員限定
+        </div>
+      )}
+
       <div className="font-bold text-2xl break-words">{post.title}</div>
       <div>
         <Link href={`/author/${post.user.id}`}>
@@ -91,7 +109,7 @@ const PostDetail = ({
       </div>
 
       <div className="leading-relaxed break-words whitespace-pre-wrap">
-        {post.content}
+        {content}
       </div>
 
       {userId === post.user.id && (
@@ -108,6 +126,32 @@ const PostDetail = ({
           >
             <Trash2 className="w-5 h-5 text-red-500" />
           </button>
+        </div>
+      )}
+
+      {isSubscribedPost && (
+        <div className="bg-gradient-radial from-blue-500 to-sky-500 text-white rounded-md p-5 sm:p-10 text-center space-y-5">
+          <div>この記事の続きは有料会員になるとお読みいただけます。</div>
+
+          <div className="inline-block">
+            {userId ? (
+              <Link href="/payment">
+                <div className="w-[300px] bg-white text-blue-500 hover:bg-white/90 font-bold shadow rounded-md py-2">
+                  有料プランをみる
+                </div>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <div className="w-[300px] bg-white text-blue-500 hover:bg-white/90 font-bold shadow rounded-md py-2">
+                  ログインする
+                </div>
+              </Link>
+            )}
+          </div>
+
+          <div className="text-xs">※いつでも解約可能です</div>
+          <div className="font-bold">有料会員特典</div>
+          <div className="text-sm">有料記事が読み放題</div>
         </div>
       )}
 
